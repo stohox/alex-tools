@@ -347,3 +347,52 @@ app.get('/api/timestamp', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Alex Tools 运行在 http://localhost:${PORT}`);
 });
+
+// ==================== AI 对话 API ====================
+
+app.post('/api/chat', async (req, res) => {
+  const { message, history } = req.body;
+  
+  if (!message) {
+    return res.json({ error: '请输入消息' });
+  }
+  
+  // 构建消息历史
+  const messages = [
+    { role: 'system', content: '你是一个友好的 AI 助手 named Alex (芒猿君)。用中文回复。保持简洁但有帮助。' }
+  ];
+  
+  // 添加历史记录（最近 10 轮）
+  if (history && Array.isArray(history)) {
+    messages.push(...history.slice(-20));
+  }
+  
+  messages.push({ role: 'user', content: message });
+  
+  try {
+    // 调用 MiniMax API
+    const response = await fetch('https://api.minimaxi.com/v1/text/chatcompletion_v2', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer sk-cp-_o9Nmd_rjhicX23vRr37ZN4RQLbPdNN8inNe9duglImAHojR5_8jchX5wjnDJeIHxL5TLoYC6LkbIcWs-9pMqwPbqiek7iJ6LQF8oIhHlqznLMl-PRqZwUw'
+      },
+      body: JSON.stringify({
+        model: 'abab6.5s-chat',
+        messages: messages,
+        max_tokens: 2048,
+        temperature: 0.7
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.choices && data.choices[0]) {
+      res.json({ response: data.choices[0].message.content });
+    } else {
+      res.json({ error: data.msg || 'API 返回错误' });
+    }
+  } catch (e) {
+    res.json({ error: e.message });
+  }
+});

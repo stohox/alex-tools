@@ -239,6 +239,13 @@
         <h3>进制转换</h3>
         <p>二进制、八进制、十进制、十六进制互转</p>
       </div>
+
+      <!-- AI 对话 -->
+      <div class="card" onclick="openChat()">
+        <div class="card-icon">💬</div>
+        <h3>AI 对话</h3>
+        <p>和 AI 助手聊天，解答问题、帮助编程</p>
+      </div>
     </div>
     
     <footer>
@@ -533,3 +540,150 @@
   </script>
 </body>
 </html>
+
+<style>
+.chat-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; }
+.chat-modal.active { display: flex; align-items: center; justify-content: center; padding: 20px; }
+.chat-content { background: white; border-radius: 20px; max-width: 700px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+.chat-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+.chat-header h2 { margin: 0; font-size: 1.3rem; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 20px; min-height: 400px; max-height: 500px; }
+.chat-input-area { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; }
+.chat-input { flex: 1; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 1rem; resize: none; min-height: 44px; max-height: 100px; }
+.chat-input:focus { outline: none; border-color: #667eea; }
+.chat-send { padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1rem; }
+.chat-send:hover { opacity: 0.9; }
+.chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
+.chat-message { margin-bottom: 15px; display: flex; gap: 10px; }
+.chat-message.user { flex-direction: row-reverse; }
+.chat-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+.chat-message.ai .chat-avatar { background: #667eea; color: white; }
+.chat-message.user .chat-avatar { background: #764ba2; color: white; }
+.chat-bubble { max-width: 75%; padding: 12px 16px; border-radius: 16px; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+.chat-message.ai .chat-bubble { background: #f0f0f0; border-top-left-radius: 4px; }
+.chat-message.user .chat-bubble { background: #667eea; color: white; border-top-right-radius: 4px; }
+.chat-typing { display: none; padding: 12px 16px; background: #f0f0f0; border-radius: 16px; border-top-left-radius: 4px; }
+.chat-typing.active { display: inline-block; }
+.chat-dot { display: inline-block; width: 8px; height: 8px; background: #999; border-radius: 50%; margin: 0 2px; animation: chatDot 1.4s infinite; }
+.chat-dot:nth-child(2) { animation-delay: 0.2s; }
+.chat-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes chatDot { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
+.chat-clear { background: none; border: none; color: #999; cursor: pointer; font-size: 0.9rem; }
+.chat-clear:hover { color: #333; }
+</style>
+
+<!-- 聊天模态框 -->
+<div class="chat-modal" id="chatModal">
+  <div class="chat-content">
+    <div class="chat-header">
+      <h2>💬 AI 对话</h2>
+      <button class="chat-clear" onclick="clearChat()">🗑️ 清空对话</button>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="chat-message ai">
+        <div class="chat-avatar">🤖</div>
+        <div class="chat-bubble">你好！我是 AI 助手，有什么可以帮你的吗？可以问我问题、编程问题，或者随便聊天~</div>
+      </div>
+    </div>
+    <div class="chat-input-area">
+      <textarea class="chat-input" id="chatInput" placeholder="输入消息..." rows="1" onkeydown="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); sendChat(); }"></textarea>
+      <button class="chat-send" id="chatSend" onclick="sendChat()">发送</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let chatHistory = [];
+
+function openChat() {
+  document.getElementById('chatModal').classList.add('active');
+}
+
+function closeChat() {
+  document.getElementById('chatModal').classList.remove('active');
+}
+
+function clearChat() {
+  if (confirm('确定清空对话记录吗？')) {
+    chatHistory = [];
+    document.getElementById('chatMessages').innerHTML = `<div class="chat-message ai">
+      <div class="chat-avatar">🤖</div>
+      <div class="chat-bubble">你好！我是 AI 助手，有什么可以帮你的吗？</div>
+    </div>`;
+  }
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('chatSend');
+  const message = input.value.trim();
+  
+  if (!message || sendBtn.disabled) return;
+  
+  // 添加用户消息
+  addMessage(message, 'user');
+  input.value = '';
+  
+  // 显示加载状态
+  sendBtn.disabled = true;
+  sendBtn.textContent = '发送中...';
+  
+  const typingHtml = `<div class="chat-message ai" id="typingMsg">
+    <div class="chat-avatar">🤖</div>
+    <div class="chat-typing active"><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span></div>
+  </div>`;
+  document.getElementById('chatMessages').insertAdjacentHTML('beforeend', typingHtml);
+  scrollToBottom();
+  
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ message, history: chatHistory })
+    });
+    
+    const data = await response.json();
+    
+    // 移除加载状态
+    document.getElementById('typingMsg').remove();
+    
+    if (data.error) {
+      addMessage('抱歉，出错了: ' + data.error, 'ai');
+    } else {
+      addMessage(data.response, 'ai');
+      chatHistory.push({ role: 'user', content: message });
+      chatHistory.push({ role: 'assistant', content: data.response });
+    }
+  } catch (e) {
+    document.getElementById('typingMsg').remove();
+    addMessage('抱歉，网络错误: ' + e.message, 'ai');
+  }
+  
+  sendBtn.disabled = false;
+  sendBtn.textContent = '发送';
+}
+
+function addMessage(text, sender) {
+  const div = document.createElement('div');
+  div.className = `chat-message ${sender}`;
+  div.innerHTML = `<div class="chat-avatar">${sender === 'ai' ? '🤖' : '👤'}</div><div class="chat-bubble">${escapeHtml(text)}</div>`;
+  document.getElementById('chatMessages').appendChild(div);
+  scrollToBottom();
+}
+
+function scrollToBottom() {
+  const msgs = document.getElementById('chatMessages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// 点击外部关闭
+document.getElementById('chatModal').addEventListener('click', (e) => {
+  if (e.target.id === 'chatModal') closeChat();
+});
+</script>
