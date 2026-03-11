@@ -396,3 +396,75 @@ app.post('/api/chat', async (req, res) => {
     res.json({ error: e.message });
   }
 });
+
+// ==================== 简单用户系统 ====================
+const users = {
+  'alex': { password: 'alex123', name: 'Alex' },
+  'admin': { password: 'admin123', name: '管理员' }
+};
+
+// 登录
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  const user = users[username];
+  
+  if (user && user.password === password) {
+    // 生成简单 token（实际项目应使用 JWT）
+    const token = Buffer.from(username + ':' + Date.now()).toString('base64');
+    res.json({ 
+      success: true, 
+      token, 
+      username, 
+      name: user.name 
+    });
+  } else {
+    res.json({ success: false, error: '用户名或密码错误' });
+  }
+});
+
+// 验证 token
+app.get('/api/auth/verify', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.json({ valid: false });
+  }
+  
+  try {
+    const decoded = Buffer.from(token, 'base64').toString();
+    const [username] = decoded.split(':');
+    
+    if (users[username]) {
+      res.json({ valid: true, username, name: users[username].name });
+    } else {
+      res.json({ valid: false });
+    }
+  } catch (e) {
+    res.json({ valid: false });
+  }
+});
+
+// 获取当前用户信息
+app.get('/api/auth/user', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.json({ loggedIn: false });
+  }
+  
+  try {
+    const decoded = Buffer.from(token, 'base64').toString();
+    const [username] = decoded.split(':');
+    
+    if (users[username]) {
+      res.json({ loggedIn: true, username, name: users[username].name });
+    } else {
+      res.json({ loggedIn: false });
+    }
+  } catch (e) {
+    res.json({ loggedIn: false });
+  }
+});
+
+// 预设用户
+const DEFAULT_USER = { username: 'alex', password: 'alex123', name: 'Alex' };

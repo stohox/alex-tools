@@ -5,23 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Alex Tools - 实用工具集</title>
   <style>
-
-.login-bar { position: fixed; top: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-.login-bar .logo { font-size: 1.2rem; font-weight: bold; }
-.login-bar .user-info { display: flex; align-items: center; gap: 10px; }
-.login-bar .login-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 20px; border-radius: 20px; border: none; cursor: pointer; }
-.login-bar .logout-btn { background: #999; color: white; padding: 8px 20px; border-radius: 20px; border: none; cursor: pointer; }
-.login-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; }
-.login-modal.active { display: flex; }
-.login-box { background: white; padding: 40px; border-radius: 20px; width: 350px; text-align: center; }
-.login-box h2 { margin-bottom: 20px; color: #333; }
-.login-box input { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #eee; border-radius: 10px; font-size: 1rem; }
-.login-box input:focus { outline: none; border-color: #667eea; }
-.login-box button { width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 1rem; cursor: pointer; }
-.login-box .error { color: #e74c3c; margin-top: 10px; font-size: 0.9rem; }
-.login-box .tip { color: #999; margin-top: 15px; font-size: 0.85rem; }
-body { padding-top: 60px; }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -159,27 +142,6 @@ body { padding-top: 60px; }
   </style>
 </head>
 <body>
-<!-- 登录栏 -->
-<div class="login-bar" id="loginBar">
-  <div class="logo">🛠️ Alex Tools</div>
-  <div class="user-info" id="userInfo">
-    <button class="login-btn" onclick="showLogin()">登录</button>
-  </div>
-</div>
-
-<!-- 登录弹窗 -->
-<div class="login-modal" id="loginModal">
-  <div class="login-box">
-    <h2>🔐 登录</h2>
-    <input type="text" id="loginUsername" placeholder="用户名" value="alex">
-    <input type="password" id="loginPassword" placeholder="密码" value="alex123">
-    <button onclick="doLogin()">登录</button>
-    <div class="error" id="loginError"></div>
-    <div class="tip">默认账户: alex / alex123</div>
-  </div>
-</div>
-
-
   <div class="container">
     <header>
       <h1>🛠️ Alex Tools</h1>
@@ -575,92 +537,11 @@ body { padding-top: 60px; }
     document.getElementById('modal').addEventListener('click', (e) => {
       if (e.target.id === 'modal') closeModal();
     });
-  
-// 登录功能
-let currentUser = null;
-
-async function checkLogin() {
-  try {
-    const res = await fetch('/api/auth/user');
-    const data = await res.json();
-    if (data.loggedIn) {
-      currentUser = data;
-      showUserInfo(data);
-    }
-  } catch(e) {}
-}
-
-function showLogin() {
-  document.getElementById('loginModal').classList.add('active');
-}
-
-function hideLogin() {
-  document.getElementById('loginModal').classList.remove('active');
-}
-
-async function doLogin() {
-  const username = document.getElementById('loginUsername').value;
-  const password = document.getElementById('loginPassword').value;
-  const errorEl = document.getElementById('loginError');
-  
-  try {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({username, password})
-    });
-    const data = await res.json();
-    
-    if (data.success) {
-      currentUser = { username: data.username, name: data.name, token: data.token };
-      localStorage.setItem('alex_token', data.token);
-      localStorage.setItem('alex_user', JSON.stringify({username: data.username, name: data.name}));
-      hideLogin();
-      showUserInfo(currentUser);
-    } else {
-      errorEl.textContent = data.error || '登录失败';
-    }
-  } catch(e) {
-    errorEl.textContent = '网络错误';
-  }
-}
-
-function logout() {
-  currentUser = null;
-  localStorage.removeItem('alex_token');
-  localStorage.removeItem('alex_user');
-  document.getElementById('userInfo').innerHTML = '<button class="login-btn" onclick="showLogin()">登录</button>';
-}
-
-function showUserInfo(user) {
-  document.getElementById('userInfo').innerHTML = '<span>👤 ' + user.name + '</span><button class="logout-btn" onclick="logout()">退出</button>';
-}
-
-// 检查登录状态
-checkLogin();
-
-</script>
+  </script>
 </body>
 </html>
 
 <style>
-
-.login-bar { position: fixed; top: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-.login-bar .logo { font-size: 1.2rem; font-weight: bold; }
-.login-bar .user-info { display: flex; align-items: center; gap: 10px; }
-.login-bar .login-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 20px; border-radius: 20px; border: none; cursor: pointer; }
-.login-bar .logout-btn { background: #999; color: white; padding: 8px 20px; border-radius: 20px; border: none; cursor: pointer; }
-.login-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; }
-.login-modal.active { display: flex; }
-.login-box { background: white; padding: 40px; border-radius: 20px; width: 350px; text-align: center; }
-.login-box h2 { margin-bottom: 20px; color: #333; }
-.login-box input { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #eee; border-radius: 10px; font-size: 1rem; }
-.login-box input:focus { outline: none; border-color: #667eea; }
-.login-box button { width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 1rem; cursor: pointer; }
-.login-box .error { color: #e74c3c; margin-top: 10px; font-size: 0.9rem; }
-.login-box .tip { color: #999; margin-top: 15px; font-size: 0.85rem; }
-body { padding-top: 60px; }
-
 .chat-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; }
 .chat-modal.active { display: flex; align-items: center; justify-content: center; padding: 20px; }
 .chat-content { background: white; border-radius: 20px; max-width: 700px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -805,68 +686,4 @@ function escapeHtml(text) {
 document.getElementById('chatModal').addEventListener('click', (e) => {
   if (e.target.id === 'chatModal') closeChat();
 });
-
-// 登录功能
-let currentUser = null;
-
-async function checkLogin() {
-  try {
-    const res = await fetch('/api/auth/user');
-    const data = await res.json();
-    if (data.loggedIn) {
-      currentUser = data;
-      showUserInfo(data);
-    }
-  } catch(e) {}
-}
-
-function showLogin() {
-  document.getElementById('loginModal').classList.add('active');
-}
-
-function hideLogin() {
-  document.getElementById('loginModal').classList.remove('active');
-}
-
-async function doLogin() {
-  const username = document.getElementById('loginUsername').value;
-  const password = document.getElementById('loginPassword').value;
-  const errorEl = document.getElementById('loginError');
-  
-  try {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({username, password})
-    });
-    const data = await res.json();
-    
-    if (data.success) {
-      currentUser = { username: data.username, name: data.name, token: data.token };
-      localStorage.setItem('alex_token', data.token);
-      localStorage.setItem('alex_user', JSON.stringify({username: data.username, name: data.name}));
-      hideLogin();
-      showUserInfo(currentUser);
-    } else {
-      errorEl.textContent = data.error || '登录失败';
-    }
-  } catch(e) {
-    errorEl.textContent = '网络错误';
-  }
-}
-
-function logout() {
-  currentUser = null;
-  localStorage.removeItem('alex_token');
-  localStorage.removeItem('alex_user');
-  document.getElementById('userInfo').innerHTML = '<button class="login-btn" onclick="showLogin()">登录</button>';
-}
-
-function showUserInfo(user) {
-  document.getElementById('userInfo').innerHTML = '<span>👤 ' + user.name + '</span><button class="logout-btn" onclick="logout()">退出</button>';
-}
-
-// 检查登录状态
-checkLogin();
-
 </script>
