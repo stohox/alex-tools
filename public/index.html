@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alex Tools - 实用工具集</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    header {
+      text-align: center;
+      color: white;
+      padding: 40px 0;
+    }
+    header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+    header p { opacity: 0.9; font-size: 1.1rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+    }
+    .card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+    .card h3 { color: #333; margin-bottom: 8px; font-size: 1.2rem; }
+    .card p { color: #666; font-size: 0.9rem; line-height: 1.5; }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      overflow-y: auto;
+    }
+    .modal.active { display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .modal-content {
+      background: white;
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #999;
+      background: none;
+      border: none;
+    }
+    .modal-close:hover { color: #333; }
+    .modal h2 { margin-bottom: 20px; color: #333; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; margin-bottom: 6px; color: #555; font-weight: 500; }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #eee;
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .form-group textarea { min-height: 120px; resize: vertical; font-family: monospace; }
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102,126,234,0.4); }
+    .result {
+      margin-top: 20px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      display: none;
+    }
+    .result.show { display: block; }
+    .result.error { background: #fee; color: #c00; }
+    .result h4 { margin-bottom: 10px; color: #333; }
+    .fortune-result { text-align: center; padding: 20px; }
+    .fortune-result .type { font-size: 2rem; margin-bottom: 10px; }
+    .fortune-result .type.da-ji { color: #e74c3c; }
+    .fortune-result .type.ji { color: #f39c12; }
+    .fortune-result .type.zhong-ji { color: #27ae60; }
+    .fortune-result .type.xiao-ji { color: #3498db; }
+    .fortune-result .type.ping { color: #95a5a6; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .stats-item {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .stats-item .num { font-size: 1.5rem; color: #667eea; font-weight: bold; }
+    .stats-item .label { font-size: 0.85rem; color: #666; }
+    footer {
+      text-align: center;
+      color: white;
+      padding: 30px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🛠️ Alex Tools</h1>
+      <p>实用工具集 - 让生活更简单</p>
+    </header>
+    
+    <div class="grid">
+      <!-- 算命 -->
+      <div class="card" onclick="openModal('fortune')">
+        <div class="card-icon">🔮</div>
+        <h3>今日运势</h3>
+        <p>输入姓名和生日，看看今天的运势如何（娱乐性质）</p>
+      </div>
+      
+      <!-- UUID -->
+      <div class="card" onclick="openModal('uuid')">
+        <div class="card-icon">🎲</div>
+        <h3>UUID 生成器</h3>
+        <p>生成唯一标识符，支持批量生成</p>
+      </div>
+      
+      <!-- Base64 -->
+      <div class="card" onclick="openModal('base64')">
+        <div class="card-icon">🔡</div>
+        <h3>Base64 编解码</h3>
+        <p>Base64 编码和解码工具</p>
+      </div>
+      
+      <!-- URL -->
+      <div class="card" onclick="openModal('url')">
+        <div class="card-icon">🔗</div>
+        <h3>URL 编解码</h3>
+        <p>URL 编码和解码工具</p>
+      </div>
+      
+      <!-- 拼音 -->
+      <div class="card" onclick="openModal('pinyin')">
+        <div class="card-icon">拼音</div>
+        <h3>汉字转拼音</h3>
+        <p>中文汉字转换为拼音</p>
+      </div>
+      
+      <!-- 哈希 -->
+      <div class="card" onclick="openModal('hash')">
+        <div class="card-icon">#️⃣</div>
+        <h3>字符串哈希</h3>
+        <p>计算字符串的哈希值</p>
+      </div>
+      
+      <!-- 颜色 -->
+      <div class="card" onclick="openModal('color')">
+        <div class="card-icon">🎨</div>
+        <h3>颜色转换</h3>
+        <p>HEX、RGB、HSL 颜色格式互转</p>
+      </div>
+      
+      <!-- 随机 -->
+      <div class="card" onclick="openModal('random')">
+        <div class="card-icon">🎱</div>
+        <h3>随机字符串</h3>
+        <p>生成随机字符串/数字</p>
+      </div>
+      
+      <!-- 文本统计 -->
+      <div class="card" onclick="openModal('text')">
+        <div class="card-icon">📊</div>
+        <h3>文本统计</h3>
+        <p>统计字符数、行数、词数等</p>
+      </div>
+      
+      <!-- JSON -->
+      <div class="card" onclick="openModal('json')">
+        <div class="card-icon">{}</div>
+        <h3>JSON 格式化</h3>
+        <p>格式化/压缩 JSON 数据</p>
+      </div>
+      
+      <!-- 掩码 -->
+      <div class="card" onclick="openModal('mask')">
+        <div class="card-icon">🔒</div>
+        <h3>敏感信息掩码</h3>
+        <p>手机号、邮箱、身份证掩码</p>
+      </div>
+      
+      <!-- 时间戳 -->
+      <div class="card" onclick="openModal('timestamp')">
+        <div class="card-icon">⏰</div>
+        <h3>时间戳转换</h3>
+        <p>时间戳和日期互转</p>
+      </div>
+      
+      <!-- 进制转换 -->
+      <div class="card" onclick="openModal('number')">
+        <div class="card-icon">🔢</div>
+        <h3>进制转换</h3>
+        <p>二进制、八进制、十进制、十六进制互转</p>
+      </div>
+    </div>
+    
+    <footer>
+      <p>© 2026 Alex Tools | Made with ❤️ by Alex (芒猿君)</p>
+    </footer>
+  </div>
+  
+  <!-- 模态框 -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+  
+  <script>
+    const tools = {
+      fortune: {
+        title: '🔮 今日运势',
+        fields: [
+          { name: 'name', label: '你的名字', type: 'text', placeholder: '请输入姓名' },
+          { name: 'birthDate', label: '出生日期', type: 'date' }
+        ],
+        action: '查看运势',
+        api: '/api/fortune',
+        method: 'POST',
+        render: (data) => {
+          const typeClass = data.type === '大吉' ? 'da-ji' : data.type === '吉' ? 'ji' : data.type === '中吉' ? 'zhong-ji' : data.type === '小吉' ? 'xiao-ji' : 'ping';
+          return `
+            <div class="fortune-result">
+              <div class="type ${typeClass}">${data.type}</div>
+              <p>${data.desc}</p>
+              <hr style="margin:15px 0">
+              <p>幸运颜色: ${data.luckyColor}</p>
+              <p>幸运数字: ${data.luckyNumber}</p>
+              <p style="margin-top:15px;color:#999;font-size:0.9rem">${data.tip}</p>
+            </div>
+          `;
+        }
+      },
+      uuid: {
+        title: '🎲 UUID 生成器',
+        fields: [
+          { name: 'count', label: '生成数量', type: 'number', value: '1' }
+        ],
+        action: '生成',
+        api: '/api/uuid?count=1',
+        render: (data) => data.uuids.map((u, i) => `<div>${i+1}. ${u}</div>`).join('')
+      },
+      base64: {
+        title: '🔡 Base64 编解码',
+        fields: [
+          { name: 'text', label: '输入文本', type: 'textarea', placeholder: '请输入要编码/解码的内容' },
+          { name: 'mode', label: '模式', type: 'select', options: ['encode', 'decode'], labels: ['编码 (Encode)', '解码 (Decode)'] }
+        ],
+        action: '转换',
+        api: '/api/base64/encode',
+        method: 'POST',
+        customAction: async () => {
+          const text = document.querySelector('#field-text').value;
+          const mode = document.querySelector('#field-mode').value;
+          const res = await fetch('/api/base64/' + mode, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({text})
+          });
+          const data = await res.json();
+          return data.result || data.error;
+        }
+      },
+      url: {
+        title: '🔗 URL 编解码',
+        fields: [
+          { name: 'text', label: '输入', type: 'textarea', placeholder: '请输入内容' },
+          { name: 'mode', label: '模式', type: 'select', options: ['encode', 'decode'], labels: ['编码', '解码'] }
+        ],
+        action: '转换',
+        api: '/api/url/encode',
+        method: 'POST',
+        customAction: async () => {
+          const text = document.querySelector('#field-text').value;
+          const mode = document.querySelector('#field-mode').value;
+          const res = await fetch('/api/url/' + mode, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({text})
+          });
+          const data = await res.json();
+          return data.result || data.error;
+        }
+      },
+      pinyin: {
+        title: '拼音转换',
+        fields: [
+          { name: 'text', label: '输入汉字', type: 'textarea', placeholder: '请输入要转换的汉字' }
+        ],
+        action: '转换',
+        api: '/api/pinyin',
+        method: 'POST',
+        render: (data) => data.result
+      },
+      hash: {
+        title: '#️⃣ 字符串哈希',
+        fields: [
+          { name: 'text', label: '输入文本', type: 'textarea', placeholder: '请输入要哈希的文本' }
+        ],
+        action: '计算',
+        api: '/api/hash',
+        method: 'POST',
+        render: (data) => `Hash: ${data.hash}\n字符数: ${data.length}`
+      },
+      color: {
+        title: '🎨 颜色转换',
+        fields: [
+          { name: 'hex', label: 'HEX 颜色', type: 'text', placeholder: '#667eea' }
+        ],
+        action: '转换',
+        api: '/api/color/hex2rgb',
+        method: 'POST',
+        render: (data) => data.error ? data.error : 
+          `HEX: ${data.hex}\nRGB: rgb(${data.rgb.r}, ${data.rgb.g}, ${data.rgb.b})\nHSL: hsl(${data.hsl.h}, ${data.hsl.s}%, ${data.hsl.l}%)`
+      },
+      random: {
+        title: '🎱 随机字符串',
+        fields: [
+          { name: 'length', label: '长度', type: 'number', value: '16' },
+          { name: 'type', label: '类型', type: 'select', options: ['', 'number', 'letter'], labels: ['字母+数字', '纯数字', '纯字母'] }
+        ],
+        action: '生成',
+        api: '/api/random?length=16',
+        render: (data) => data.result
+      },
+      text: {
+        title: '📊 文本统计',
+        fields: [
+          { name: 'text', label: '输入文本', type: 'textarea', placeholder: '请输入要统计的文本' }
+        ],
+        action: '统计',
+        api: '/api/text/stats',
+        method: 'POST',
+        render: (data) => `
+          <div class="stats-grid">
+            <div class="stats-item"><div class="num">${data.chars}</div><div class="label">总字符</div></div>
+            <div class="stats-item"><div class="num">${data.charsNoSpaces}</div><div class="label">非空格字符</div></div>
+            <div class="stats-item"><div class="num">${data.lines}</div><div class="label">行数</div></div>
+            <div class="stats-item"><div class="num">${data.words}</div><div class="label">词数</div></div>
+          </div>
+        `
+      },
+      json: {
+        title: '{} JSON 格式化',
+        fields: [
+          { name: 'text', label: '输入 JSON', type: 'textarea', placeholder: '{"key":"value"}' }
+        ],
+        action: '格式化',
+        api: '/api/json/format',
+        method: 'POST',
+        render: (data) => data.error ? data.error : data.formatted
+      },
+      mask: {
+        title: '🔒 敏感信息掩码',
+        fields: [
+          { name: 'text', label: '输入内容', type: 'text', placeholder: '13812345678' },
+          { name: 'type', label: '类型', type: 'select', options: ['phone', 'email', 'idcard'], labels: ['手机号', '邮箱', '身份证'] }
+        ],
+        action: '掩码',
+        api: '/api/mask',
+        method: 'POST',
+        render: (data) => `原始: ${data.original}\n掩码后: ${data.masked}`
+      },
+      timestamp: {
+        title: '⏰ 时间戳转换',
+        fields: [
+          { name: 'time', label: '时间戳(可选)', type: 'number', placeholder: '留空获取当前时间' }
+        ],
+        action: '转换',
+        api: '/api/timestamp',
+        render: (data) => `时间戳: ${data.timestamp}\n日期时间: ${data.datetime}\n日期: ${data.date}`
+      },
+      number: {
+        title: '🔢 进制转换',
+        fields: [
+          { name: 'value', label: '数值', type: 'text', placeholder: '255' },
+          { name: 'from', label: '原始进制', type: 'select', options: ['2', '8', '10', '16'], labels: ['二进制', '八进制', '十进制', '十六进制'] },
+          { name: 'to', label: '目标进制', type: 'select', options: ['2', '8', '10', '16'], labels: ['二进制', '八进制', '十进制', '十六进制'] }
+        ],
+        action: '转换',
+        api: '/api/number/convert',
+        method: 'POST',
+        render: (data) => data.error ? data.error : `${data.value} (${data.from}进制) = ${data.result} (${data.to}进制)\n十进制: ${data.decimal}`
+      }
+    };
+    
+    let currentTool = null;
+    
+    function openModal(toolId) {
+      currentTool = tools[toolId];
+      const modal = document.getElementById('modal');
+      const body = document.getElementById('modalBody');
+      
+      let html = `<h2>${currentTool.title}</h2>`;
+      
+      for (const field of currentTool.fields) {
+        const value = field.value || '';
+        const id = 'field-' + field.name;
+        
+        if (field.type === 'select') {
+          html += `
+            <div class="form-group">
+              <label>${field.label}</label>
+              <select id="${id}">
+                ${field.options.map((v, i) => `<option value="${v}" ${value === v ? 'selected' : ''}>${field.labels[i]}</option>`).join('')}
+              </select>
+            </div>
+          `;
+        } else if (field.type === 'textarea') {
+          html += `
+            <div class="form-group">
+              <label>${field.label}</label>
+              <textarea id="${id}" placeholder="${field.placeholder || ''}"></textarea>
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="form-group">
+              <label>${field.label}</label>
+              <input type="${field.type}" id="${id}" placeholder="${field.placeholder || ''}" value="${value}">
+            </div>
+          `;
+        }
+      }
+      
+      html += `<button class="btn" onclick="execute()">${currentTool.action}</button>`;
+      html += `<div class="result" id="result"></div>`;
+      
+      body.innerHTML = html;
+      modal.classList.add('active');
+    }
+    
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+    }
+    
+    async function execute() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.classList.remove('show', 'error');
+      
+      try {
+        let data, url, options;
+        
+        if (currentTool.customAction) {
+          data = await currentTool.customAction();
+          resultDiv.textContent = data;
+        } else {
+          url = currentTool.api || '/api/' + Object.keys(tools).find(k => tools[k] === currentTool);
+          options = { method: currentTool.method || 'GET' };
+          
+          if (currentTool.method === 'POST') {
+            const body = {};
+            for (const field of currentTool.fields) {
+              const el = document.getElementById('field-' + field.name);
+              body[field.name] = el.value;
+            }
+            options.headers = {'Content-Type': 'application/json'};
+            options.body = JSON.stringify(body);
+          }
+          
+          const res = await fetch(url, options);
+          data = await res.json();
+          
+          if (data.error) {
+            resultDiv.classList.add('error');
+            resultDiv.textContent = data.error;
+          } else if (currentTool.render) {
+            resultDiv.innerHTML = currentTool.render(data);
+          } else {
+            resultDiv.textContent = JSON.stringify(data, null, 2);
+          }
+        }
+        
+        resultDiv.classList.add('show');
+      } catch (e) {
+        resultDiv.classList.add('show', 'error');
+        resultDiv.textContent = 'Error: ' + e.message;
+      }
+    }
+    
+    // 点击模态框外部关闭
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target.id === 'modal') closeModal();
+    });
+  </script>
+</body>
+</html>
